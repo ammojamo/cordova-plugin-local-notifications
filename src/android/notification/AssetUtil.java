@@ -142,6 +142,27 @@ class AssetUtil {
 		return Uri.fromFile(file);
 	}
 
+    /**
+     * Due to this bug: https://code.google.com/p/android/issues/detail?id=81357 we can't rely on having access to
+     * external cache dir without including an unwanted WRITE_EXTERNAL_STORAGE permission.
+     * Instead, we attempt to use external cache if possible, and fall back to internal otherwise.
+     */
+    private File getCacheDir() {
+        File dir = context.getExternalCacheDir();
+        if(dir != null) {
+            try {
+                // Try writing to dir
+                File temp = File.createTempFile("check", "tmp", dir);
+                temp.delete();
+                return dir;
+            } catch(Exception e) {
+                dir = null;
+            }
+        }
+
+        return context.getCacheDir();
+    }
+
 	/**
 	 * URI for an asset.
 	 *
@@ -152,7 +173,7 @@ class AssetUtil {
      *      URI pointing to the given path
 	 */
     private Uri getUriFromAsset(String path) {
-		File dir = context.getExternalCacheDir();
+		File dir = getCacheDir();
 
 		if (dir == null) {
 			Log.e("Asset", "Missing external cache dir");
@@ -197,7 +218,7 @@ class AssetUtil {
      *      URI pointing to the given path
 	 */
 	private Uri getUriForResourcePath(String path) {
-		File dir = context.getExternalCacheDir();
+		File dir = getCacheDir();
 
 		if (dir == null) {
 			Log.e("Asset", "Missing external cache dir");
@@ -249,7 +270,7 @@ class AssetUtil {
      *      Uri of the downloaded file
 	 */
 	private Uri getUriFromRemote(String path) {
-        File dir = context.getExternalCacheDir();
+        File dir = getCacheDir();
 
         if (dir == null) {
             Log.e("Asset", "Missing external cache dir");
